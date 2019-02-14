@@ -9,4 +9,5 @@ This is the rep for the project of the PSYC 161 course
   - [ ] Fix the bug for the WinStay, LoseSwitch, and Repetition Index (RI)
   - [ ] Use Argparse
   - [ ] Add tests
+  
   The list would be updated
