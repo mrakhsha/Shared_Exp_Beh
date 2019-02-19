@@ -11,25 +11,46 @@ import numpy as np
 import dill
 from scipy import stats
 
-# Directory of the behavioral data
-file_directory = '/Users/mohsen/Dropbox (CCNL-Dartmouth)/Shared Experiments REWARD/beh_data/'
-# list of subjects
-subject_list = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Shared_HASubNum20',
-                'behav_Shared_JHSubNum29',
-                'behav_Shared_JSSubNum25', 'behav_Shared_PDSubNum28', 'behav_Shared_SPSubNum27',
-                'behav_Shared_STSubNum26',
-                'behav_Shared_TLSubNum22', 'behav_Shared_TWSubNum30', 'behav_Shared_TZSubNum23',
-                'behav_Shared_AHSubNum12',
-                'behav_Shared_AMSubNum16', 'behav_Shared_ASSubNum18', 'behav_Shared_BJSSubNum14',
-                'behav_Shared_BSSubNum15',
-                'behav_Shared_JEVSubNum11', 'behav_Shared_JGSubNum19', 'behav_Shared_JSSubNum16',
-                'behav_Shared_MHSubNum17',
-                'behav_Shared_OKSubNum13', 'behav_Shared_GFSubNum15', 'behav_Shared_KKSubNum14',
-                'behav_Shared_NH2SubNum13']
 
+# define a class of functions for behavior analysis
+class Behavior:
+    """
+            Blueprint for behavior
 
-# subject_list  = ['Shared_GFSubNum15']
-# subject_list  = ['Shared_GFSubNum15','Shared_KKSubNum14','Shared_NH2SubNum13']
+    """
+
+    def __init__(self, cor_vec):
+        self.cor_vec = cor_vec
+
+    # calculating performance
+    def performance(self):
+
+        mean_perf = (np.nanmean(self.cor_vec)) * 100
+        return mean_perf
+
+    # calculating probability of stay
+    def prob_stay(self):
+
+        pre_cor_vec = np.insert(self.cor_vec[:-1], 0, 0)
+        idx_stay = np.array(pre_cor_vec == self.cor_vec)
+        prob_stay = np.mean(idx_stay)
+        return prob_stay
+
+    # calculating probability of WinStay
+    def prob_winstay(self):
+        pre_cor_vec = np.insert(self.cor_vec[:-1], 0, 0)
+        idx_stay = np.array(pre_cor_vec == self.cor_vec)
+        prob_winstay = np.mean(idx_stay & pre_cor_vec) / np.mean(pre_cor_vec)
+        return prob_winstay
+
+    # calculating probability of LoseSwitch
+    def prob_loseswitch(self):
+        pre_cor_vec = np.insert(self.cor_vec[:-1], 0, 0)
+        idx_switch = np.array(pre_cor_vec != self.cor_vec)
+        pre_false_vec = ~(pre_cor_vec.astype(bool)) * 1
+        prob_loseswitch = np.mean(idx_switch & pre_false_vec) / np.mean(pre_false_vec)
+        return prob_loseswitch
+
 
 # define the function which extracts the behavioral variables we need
 def var_extractor(file_directory, subject_list):
@@ -39,18 +60,20 @@ def var_extractor(file_directory, subject_list):
     :param subject_list: A list of inputs
     :return: a dictionary of all the variables of the experiment and behavior
     """
+
     beh_vars = []
+
     # main loop for loading the data
-    for subject in range(len(subject_list)):
-        beh_data = scipy.io.loadmat(file_directory + subject_list[subject] + '.mat')
-        num_tar_att = np.array(beh_data["num_tar_att"])
-        att_side = np.array(beh_data["att_side"])
+    for subject in subject_list:
+        beh_data = scipy.io.loadmat(file_directory + subject + '.mat')
+        num_tar_att = np.array(beh_data["NumTargetAttended"])
+        att_side = np.array(beh_data["AttendedSide"])
         att_side = np.transpose(att_side)
-        conf_val = np.array(beh_data["conf_val"])
-        get_rew = np.array(beh_data["get_rew"])
-        rew_val = np.array(beh_data["rew_val"])
-        att_first = np.array(beh_data["att_first"])
-        sub_rt = np.array(beh_data["sub_rt"])
+        conf_val = np.array(beh_data["ConfidenceValue"])
+        get_rew = np.array(beh_data["GetReward"])
+        rew_val = np.array(beh_data["RewardVecValue"])
+        att_first = np.array(beh_data["AttendedFirst"])
+        sub_rt = np.array(beh_data["SubjectRT"])
 
         # Extracting the ones with only one target
         idx_one_tar = num_tar_att == 1
@@ -59,62 +82,37 @@ def var_extractor(file_directory, subject_list):
         tmp_rew_val = rew_val[idx_one_tar]
         tmp_sub_rt = sub_rt[idx_one_tar]
         tmp_att_first = att_first[idx_one_tar]
+
         # reshape to the block form
         conf_val = tmp_conf_val.reshape(att_side.shape[0], int(tmp_conf_val.shape[0] / att_side.shape[0]))
         get_rew = tmp_get_rew.reshape(att_side.shape[0], int(tmp_get_rew.shape[0] / att_side.shape[0]))
         rew_val = tmp_rew_val.reshape(att_side.shape[0], int(tmp_rew_val.shape[0] / att_side.shape[0]))
         sub_rt = tmp_sub_rt.reshape(att_side.shape[0], int(tmp_sub_rt.shape[0] / att_side.shape[0]))
         att_first = tmp_att_first.reshape(att_side.shape[0], int(tmp_att_first.shape[0] / att_side.shape[0]))
+
         # make a dictionary for necessary variables
         tmp_beh_vars = {"att_side": att_side, "conf_val": conf_val, "get_rew": get_rew, "rew_val": rew_val,
                         "sub_rt": sub_rt, "att_first": att_first}
+
         # append counters data together
         beh_vars.append(tmp_beh_vars)
 
     return beh_vars
 
 
-# define a class of functions for behavior analysis
-class Behavior:
-    ...
-
-    @staticmethod
-    # calculating correct
-    def performance(cor_vec):
-        """
-        
-        :param cor_vec: numpy array of correct/incorrect
-        :return: scalar of performance
-        """
-        mean_perf = (np.nanmean(cor_vec)) * 100
-        return mean_perf
-
-    # calculating probability of stay
-    def prob_stay(cor_vec):
-        pre_cor_vec = np.insert(cor_vec[:-1], 0, 0)
-        idx_stay = np.array(pre_cor_vec == cor_vec)
-        prob_stay = np.mean(idx_stay)
-        return prob_stay
-
-    # calculating probability of WinStay
-    def prob_winstay(cor_vec):
-        pre_cor_vec = np.insert(cor_vec[:-1], 0, 0)
-        idx_stay = np.array(pre_cor_vec == cor_vec)
-        prob_winstay = np.mean(idx_stay & pre_cor_vec) / np.mean(pre_cor_vec)
-        return prob_winstay
-
-    # calculating probability of LoseSwitch
-    def prob_loseswitch(cor_vec):
-        pre_cor_vec = np.insert(cor_vec[:-1], 0, 0)
-        idx_switch = np.array(pre_cor_vec != cor_vec)
-        pre_false_vec = ~(pre_cor_vec.astype(bool)) * 1
-        prob_loseswitch = np.mean(idx_switch & pre_false_vec) / np.mean(pre_false_vec)
-        return prob_loseswitch
-
-
 def beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first):
-    if idx_side == 1 or idx_side == 2:
+    """
 
+    :param beh_vars: a dictionary of the inputs of the behavioral parameters
+    :param idx_rew: int to show which reward value we need
+    :param idx_conf: int to show which confidence results we want
+    :param idx_side: int to show which side we want
+    :param idx_att_first: int shows whether we want the trials in which target appears in attended stream earlier
+    :return:
+            a dictionary of all behavioral policies
+    """
+
+    if idx_side == 1 or idx_side == 2:
         num_block = int((beh_vars[0]["att_side"].shape[0]) / 2)
     else:
         num_block = int(beh_vars[0]["att_side"].shape[0])
@@ -127,9 +125,9 @@ def beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first):
     sub_rt = []
     mean_sub_rt = np.nan * np.zeros(shape=(len(beh_vars), num_block))
 
-    for subject in range(len(beh_vars)):
+    for sub_beh in beh_vars:
 
-        tmp_beh_data = beh_vars[subject]
+        tmp_beh_data = sub_beh
         tmp_beh_data1 = {}
 
         if idx_side == 1 or idx_side == 2:
@@ -190,128 +188,67 @@ def beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first):
             sub_rt.append(tmp_rt)
             mean_sub_rt[subject, block] = np.mean(tmp_rt)
 
-        beh_result = {"performance": performance, "prob_stay": prob_stay, "prob_winstay": prob_winstay, 
-                      "prob_loseswitch": prob_loseswitch, "sub_rt": sub_rt, "mean_sub_rt": mean_sub_rt}
+    beh_result = {"performance": performance, "prob_stay": prob_stay, "prob_winstay": prob_winstay,
+                  "prob_loseswitch": prob_loseswitch, "sub_rt": sub_rt, "mean_sub_rt": mean_sub_rt}
 
     return beh_result
 
 
-# Extracting the behavioral variables #############################
-beh_vars = var_extractor(file_directory, subject_list)
+def main():
+    # Directory of the behavioral data (To do: Change this to argument)
+    file_directory = '/Users/mohsen/Dropbox (CCNL-Dartmouth)/Shared Experiments REWARD/beh_data/'
+    # list of subjects (To do: Change this to argument)
+    subject_list = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Shared_HASubNum20',
+                    'behav_Shared_JHSubNum29',
+                    'behav_Shared_JSSubNum25', 'behav_Shared_PDSubNum28', 'behav_Shared_SPSubNum27',
+                    'behav_Shared_STSubNum26',
+                    'behav_Shared_TLSubNum22', 'behav_Shared_TWSubNum30', 'behav_Shared_TZSubNum23',
+                    'behav_Shared_AHSubNum12',
+                    'behav_Shared_AMSubNum16', 'behav_Shared_ASSubNum18', 'behav_Shared_BJSSubNum14',
+                    'behav_Shared_BSSubNum15',
+                    'behav_Shared_JEVSubNum11', 'behav_Shared_JGSubNum19', 'behav_Shared_JSSubNum16',
+                    'behav_Shared_MHSubNum17',
+                    'behav_Shared_OKSubNum13', 'behav_Shared_GFSubNum15', 'behav_Shared_KKSubNum14',
+                    'behav_Shared_NH2SubNum13']
 
-# Instruction ##############################
+    # subject_list  = ['Shared_GFSubNum15']
+    # subject_list  = ['Shared_GFSubNum15','Shared_KKSubNum14','Shared_NH2SubNum13']
 
-# idx_side = 0 means all the trials
-# idx_side = 1 means the trials of side 1
-# idx_side = 2 means the trials of side 2
+    # Extracting the behavioral variables #############################
+    beh_vars = var_extractor(file_directory, subject_list)
 
-# idx_rew = 0 means all the trials
-# idx_rew = 3 means the trials with reward 3
-# idx_rew = 1 means the trials with reward 1
+    # Instruction ##############################
 
-# idx_conf = 0 means all the trials
-# idx_conf = 2 means the trials with confidence 2
-# idx_conf = 1 means the trials with confidence 1
+    # idx_side = 0 means all the trials
+    # idx_side = 1 means the trials of side 1
+    # idx_side = 2 means the trials of side 2
 
-# idx_att_first = 2
-# idx_att_first = 1
-# idx_att_first = 0
+    # idx_rew = 0 means all the trials
+    # idx_rew = 3 means the trials with reward 3
+    # idx_rew = 1 means the trials with reward 1
 
-# Strategy over all trials #############################
-idx_rew = 0
-idx_conf = 0
-idx_side = 0
-idx_att_first = 2
+    # idx_conf = 0 means all the trials
+    # idx_conf = 2 means the trials with confidence 2
+    # idx_conf = 1 means the trials with confidence 1
 
-beh0002 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
+    # idx_att_first = 2
+    # idx_att_first = 1
+    # idx_att_first = 0
 
-# Strategy over all trials #############################
-idx_rew = 0
-idx_conf = 0
-idx_side = 1
-idx_att_first = 2
+    beh0002 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=0, idx_att_first=2)
+    beh0012 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=1, idx_att_first=2)
+    beh0022 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=2, idx_att_first=2)
+    beh0001 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=0, idx_att_first=1)
+    beh0000 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=0, idx_att_first=0)
+    beh3002 = beh_analysis(beh_vars, idx_rew=3, idx_conf=0, idx_side=0, idx_att_first=2)
+    beh1002 = beh_analysis(beh_vars, idx_rew=1, idx_conf=0, idx_side=0, idx_att_first=2)
+    beh0202 = beh_analysis(beh_vars, idx_rew=0, idx_conf=2, idx_side=0, idx_att_first=2)
+    beh0102 = beh_analysis(beh_vars, idx_rew=0, idx_conf=1, idx_side=0, idx_att_first=2)
 
-beh0012 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
+    beh_all = (beh0002, beh0012, beh0022, beh0001, beh0000, beh3002, beh1002, beh0202, beh0102)
 
-#
-idx_rew = 0
-idx_conf = 0
-idx_side = 2
-idx_att_first = 2
+    return beh_all
 
-beh0022 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
 
-perf1 = beh0012["performance"]
-perf2 = beh0022["performance"]
-
-mean_perf1 = np.mean(perf1, 1)
-mean_perf2 = np.mean(perf2, 1)
-ttest_mean12 = stats.ttest_rel(np.delete(mean_perf1, 18), np.delete(mean_perf2, 18))
-
-perf1 = perf1.reshape(perf1.shape[0] * perf1.shape[1], 1)
-perf2 = perf2.reshape(perf2.shape[0] * perf2.shape[1], 1)
-ttest_12 = stats.ttest_rel(perf1, perf2)
-ranksum_12 = stats.ranksums(perf1, perf2)
-
-# %%
-# Strategy over all trials attend first ##########################
-idx_rew = 0
-idx_conf = 0
-idx_side = 0
-idx_att_first = 1
-
-beh0001 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
-
-# %%
-# Strategy over all trials attend second #########################
-idx_rew = 0
-idx_conf = 0
-idx_side = 0
-idx_att_first = 0
-
-beh0000 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
-
-# %%
-# Strategy over all trials highreward #############################
-idx_rew = 3
-idx_conf = 0
-idx_side = 0
-idx_att_first = 2
-
-beh3002 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
-# %%
-# Strategy over all trials lowreward #############################
-idx_rew = 1
-idx_conf = 0
-idx_side = 0
-idx_att_first = 2
-
-beh1002 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
-# %%
-# Strategy over all trials highconfidence #######################
-idx_rew = 0
-idx_conf = 2
-idx_side = 0
-idx_att_first = 2
-
-beh0202 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
-# %%
-# Strategy over all trials lowconfidence #########################
-idx_rew = 0
-idx_conf = 1
-idx_side = 0
-idx_att_first = 2
-
-beh0102 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
-
-#  Saving the variables ########################
-# %%
-# pip install dill --user
-filename = 'Behavior20181220.pkl'
-
-dill.dump_session(filename)
-
-# and to load the session again:
-# import dill
-# filename = 'Behavior.pkl'
-# dill.load_session(filename)
+if __name__ == '__main__':
+    main()
