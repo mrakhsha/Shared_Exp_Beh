@@ -1,20 +1,20 @@
 """
 This code is written for behavioral analysis of the EEG shared experiment
 Written by Mohsen Rakhshan 
-V2 . The first version (Dec. 20, 2018)
 
-To do list: I should calculate WinStay LoseSwitch and the others on the real indices and not in the IDSelective
+To do list: I should calculate WinStay LoseSwitch and the others on the real indices and not in the idx_selective
 """
 # import necessary libraries and packages
 import scipy.io
 import numpy as np
-import pdb
+# import pdb
 import dill
+from scipy import stats
 
 # Directory of the behavioral data
-FileDirectory = '/Users/mohsen/Dropbox (CCNL-Dartmouth)/Shared Experiments REWARD/BehData/';
+file_directory = '/Users/mohsen/Dropbox (CCNL-Dartmouth)/Shared Experiments REWARD/beh_data/'
 # list of subjects
-SubjectsList = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Shared_HASubNum20',
+subject_list = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Shared_HASubNum20',
                 'behav_Shared_JHSubNum29',
                 'behav_Shared_JSSubNum25', 'behav_Shared_PDSubNum28', 'behav_Shared_SPSubNum27',
                 'behav_Shared_STSubNum26',
@@ -28,57 +28,51 @@ SubjectsList = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Sha
                 'behav_Shared_NH2SubNum13']
 
 
-# SubjectsList  = ['Shared_GFSubNum15']
-# SubjectsList  = ['Shared_GFSubNum15','Shared_KKSubNum14','Shared_NH2SubNum13']
-# %%
-###############################################################################
-############################# Functions #######################################
-###############################################################################
+# subject_list  = ['Shared_GFSubNum15']
+# subject_list  = ['Shared_GFSubNum15','Shared_KKSubNum14','Shared_NH2SubNum13']
 
 # define the function which extracts the behavioral variables we need
-def VariableExtractor(FileDirectory, SubjectsList):
-    BehVariables = []
+def var_extractor(file_directory, subject_list):
+    """
+    
+    :param file_directory: A string for the address of the input data
+    :param subject_list: A list of inputs
+    :return: a dictionary of all the variables of the experiment and behavior
+    """
+    beh_vars = []
     # main loop for loading the data
-    for Counter_Subjects in range(len(SubjectsList)):
-        BehData = scipy.io.loadmat(FileDirectory + SubjectsList[Counter_Subjects] + '.mat')
-        # pdb.set_trace()
-        NumTargetAttended = np.array(BehData["NumTargetAttended"])
-        AttendedSide = np.array(BehData["AttendedSide"])
-        AttendedSide = np.transpose(AttendedSide)
-        ConfidenceValue = np.array(BehData["ConfidenceValue"])
-        GetReward = np.array(BehData["GetReward"])
-        RewardVecValue = np.array(BehData["RewardVecValue"])
-        AttendedFirst = np.array(BehData["AttendedFirst"])
-        SubjectRT = np.array(BehData["SubjectRT"])
+    for subject in range(len(subject_list)):
+        beh_data = scipy.io.loadmat(file_directory + subject_list[subject] + '.mat')
+        num_tar_att = np.array(beh_data["num_tar_att"])
+        att_side = np.array(beh_data["att_side"])
+        att_side = np.transpose(att_side)
+        conf_val = np.array(beh_data["conf_val"])
+        get_rew = np.array(beh_data["get_rew"])
+        rew_val = np.array(beh_data["rew_val"])
+        att_first = np.array(beh_data["att_first"])
+        sub_rt = np.array(beh_data["sub_rt"])
 
         # Extracting the ones with only one target
-        IDOneTarget = NumTargetAttended == 1
-        # pdb.set_trace()
-        tmpConfidenceValue = ConfidenceValue[IDOneTarget]
-        tmpGetReward = GetReward[IDOneTarget]
-        tmpRewardVecValue = RewardVecValue[IDOneTarget]
-        tmpSubjectRT = SubjectRT[IDOneTarget]
-        tmpAttendedFirst = AttendedFirst[IDOneTarget]
-        # pdb.set_trace()
+        idx_one_tar = num_tar_att == 1
+        tmp_conf_val = conf_val[idx_one_tar]
+        tmp_get_rew = get_rew[idx_one_tar]
+        tmp_rew_val = rew_val[idx_one_tar]
+        tmp_sub_rt = sub_rt[idx_one_tar]
+        tmp_att_first = att_first[idx_one_tar]
         # reshape to the block form
-        ConfidenceValue = tmpConfidenceValue.reshape(AttendedSide.shape[0],
-                                                     int(tmpConfidenceValue.shape[0] / AttendedSide.shape[0]))
-        GetReward = tmpGetReward.reshape(AttendedSide.shape[0], int(tmpGetReward.shape[0] / AttendedSide.shape[0]))
-        RewardVecValue = tmpRewardVecValue.reshape(AttendedSide.shape[0],
-                                                   int(tmpRewardVecValue.shape[0] / AttendedSide.shape[0]))
-        SubjectRT = tmpSubjectRT.reshape(AttendedSide.shape[0], int(tmpSubjectRT.shape[0] / AttendedSide.shape[0]))
-        AttendedFirst = tmpAttendedFirst.reshape(AttendedSide.shape[0],
-                                                 int(tmpAttendedFirst.shape[0] / AttendedSide.shape[0]))
+        conf_val = tmp_conf_val.reshape(att_side.shape[0], int(tmp_conf_val.shape[0] / att_side.shape[0]))
+        get_rew = tmp_get_rew.reshape(att_side.shape[0], int(tmp_get_rew.shape[0] / att_side.shape[0]))
+        rew_val = tmp_rew_val.reshape(att_side.shape[0], int(tmp_rew_val.shape[0] / att_side.shape[0]))
+        sub_rt = tmp_sub_rt.reshape(att_side.shape[0], int(tmp_sub_rt.shape[0] / att_side.shape[0]))
+        att_first = tmp_att_first.reshape(att_side.shape[0], int(tmp_att_first.shape[0] / att_side.shape[0]))
         # make a dictionary for necessary variables
-        tmpBehVariables = {"AttendedSide": AttendedSide, "ConfidenceValue": ConfidenceValue, "GetReward": GetReward,
-                           "RewardVecValue": RewardVecValue, "SubjectRT": SubjectRT, "AttendedFirst": AttendedFirst}
+        tmp_beh_vars = {"att_side": att_side, "conf_val": conf_val, "get_rew": get_rew, "rew_val": rew_val,
+                        "sub_rt": sub_rt, "att_first": att_first}
         # append counters data together
-        BehVariables.append(tmpBehVariables)
+        beh_vars.append(tmp_beh_vars)
 
-    return BehVariables
+    return beh_vars
 
-
-###############################################################################
 
 # define a class of functions for behavior analysis
 class Behavior:
@@ -86,265 +80,238 @@ class Behavior:
 
     @staticmethod
     # calculating correct
-    def Performance(CorrectVec):
-        MeanPerformance = (np.nanmean(CorrectVec)) * 100
-        return MeanPerformance
+    def performance(cor_vec):
+        """
+        
+        :param cor_vec: numpy array of correct/incorrect
+        :return: scalar of performance
+        """
+        mean_perf = (np.nanmean(cor_vec)) * 100
+        return mean_perf
 
     # calculating probability of stay
-    def PStay(CorrectVec):
-        PreCorrectVec = np.insert(CorrectVec[:-1], 0, 0)
-        IDStay = np.array(PreCorrectVec == CorrectVec)
-        PStay = np.mean(IDStay)
-        return PStay
+    def prob_stay(cor_vec):
+        pre_cor_vec = np.insert(cor_vec[:-1], 0, 0)
+        idx_stay = np.array(pre_cor_vec == cor_vec)
+        prob_stay = np.mean(idx_stay)
+        return prob_stay
 
     # calculating probability of WinStay
-    def PWinStay(CorrectVec):
-        PreCorrectVec = np.insert(CorrectVec[:-1], 0, 0)
-        IDStay = np.array(PreCorrectVec == CorrectVec)
-        PWinStay = np.mean(IDStay & PreCorrectVec) / np.mean(PreCorrectVec)
-        return PWinStay
+    def prob_winstay(cor_vec):
+        pre_cor_vec = np.insert(cor_vec[:-1], 0, 0)
+        idx_stay = np.array(pre_cor_vec == cor_vec)
+        prob_winstay = np.mean(idx_stay & pre_cor_vec) / np.mean(pre_cor_vec)
+        return prob_winstay
 
     # calculating probability of LoseSwitch
-    def PLoseSwitch(CorrectVec):
-        PreCorrectVec = np.insert(CorrectVec[:-1], 0, 0)
-        IDSwitch = np.array(PreCorrectVec != CorrectVec)
-        PreFalseVec = ~(PreCorrectVec.astype(bool)) * 1
-        PLoseSwitch = np.mean(IDSwitch & PreFalseVec) / np.mean(PreFalseVec)
-        return PLoseSwitch
+    def prob_loseswitch(cor_vec):
+        pre_cor_vec = np.insert(cor_vec[:-1], 0, 0)
+        idx_switch = np.array(pre_cor_vec != cor_vec)
+        pre_false_vec = ~(pre_cor_vec.astype(bool)) * 1
+        prob_loseswitch = np.mean(idx_switch & pre_false_vec) / np.mean(pre_false_vec)
+        return prob_loseswitch
 
 
-###############################################################################
+def beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first):
+    if idx_side == 1 or idx_side == 2:
 
-def BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst):
-    if IndexSide == 1 or IndexSide == 2:
-
-        NumBlock = int((BehVariables[0]["AttendedSide"].shape[0]) / 2)
+        num_block = int((beh_vars[0]["att_side"].shape[0]) / 2)
     else:
-        NumBlock = int(BehVariables[0]["AttendedSide"].shape[0])
+        num_block = int(beh_vars[0]["att_side"].shape[0])
 
-    # pdb.set_trace()
     # initialization
-    Performance = np.nan * np.zeros(shape=(len(BehVariables), NumBlock))
-    PStay = np.nan * np.zeros(shape=(len(BehVariables), NumBlock))
-    PWinStay = np.nan * np.zeros(shape=(len(BehVariables), NumBlock))
-    PLoseSwitch = np.nan * np.zeros(shape=(len(BehVariables), NumBlock))
-    SubjectRT = []
-    MeanSubjectRT = np.nan * np.zeros(shape=(len(BehVariables), NumBlock))
+    performance = np.nan * np.zeros(shape=(len(beh_vars), num_block))
+    prob_stay = np.nan * np.zeros(shape=(len(beh_vars), num_block))
+    prob_winstay = np.nan * np.zeros(shape=(len(beh_vars), num_block))
+    prob_loseswitch = np.nan * np.zeros(shape=(len(beh_vars), num_block))
+    sub_rt = []
+    mean_sub_rt = np.nan * np.zeros(shape=(len(beh_vars), num_block))
 
-    for Counter_Subjects in range(len(BehVariables)):
+    for subject in range(len(beh_vars)):
 
-        tmpBehData = BehVariables[Counter_Subjects]
-        tmpBehData1 = {}
+        tmp_beh_data = beh_vars[subject]
+        tmp_beh_data1 = {}
 
-        if IndexSide == 1 or IndexSide == 2:
+        if idx_side == 1 or idx_side == 2:
 
-            IDSide = np.where(BehVariables[0]["AttendedSide"] == IndexSide)[0]
+            idx_side = np.where(beh_vars[0]["att_side"] == idx_side)[0]
 
-            for Counter_DictKeys in tmpBehData.keys():
-                tmpBehData1[Counter_DictKeys] = tmpBehData[Counter_DictKeys][IDSide, :]
+            for key in tmp_beh_data.keys():
+                tmp_beh_data1[key] = tmp_beh_data[key][idx_side, :]
         else:
-            tmpBehData1 = tmpBehData
+            tmp_beh_data1 = tmp_beh_data
 
-        for Counter_Block in range(NumBlock):
-
-            # pdb.set_trace()
+        for block in range(num_block):
             # calculate the average of correct over reward and confidence conditions
-            if (IndexRew == 1 or IndexRew == 3) and (IndexConf != 2 and IndexConf != 1) and (
-                    IndexAttendedFirst != 1 and IndexAttendedFirst != 0):
-                # pdb.set_trace()
-                IDSelective = np.where(tmpBehData1["RewardVecValue"][Counter_Block, :] == IndexRew)
+            if (idx_rew == 1 or idx_rew == 3) and (idx_conf != 2 and idx_conf != 1) and (
+                    idx_att_first != 1 and idx_att_first != 0):
+                idx_selective = np.where(tmp_beh_data1["rew_val"][block, :] == idx_rew)
 
-            elif (IndexRew != 1 and IndexRew != 3) and (IndexConf == 2 or IndexConf == 1) and (
-                    IndexAttendedFirst != 1 and IndexAttendedFirst != 0):
-                #                pdb.set_trace()
-                # pdb.set_trace()
-                IDSelective = np.where(tmpBehData1["ConfidenceValue"][Counter_Block, :] == IndexConf)
+            elif (idx_rew != 1 and idx_rew != 3) and (idx_conf == 2 or idx_conf == 1) and (
+                    idx_att_first != 1 and idx_att_first != 0):
+                idx_selective = np.where(tmp_beh_data1["conf_val"][block, :] == idx_conf)
 
-            elif (IndexRew != 1 and IndexRew != 3) and (IndexConf != 2 and IndexConf != 1) and (
-                    IndexAttendedFirst == 1 or IndexAttendedFirst == 0):
-                # pdb.set_trace()
-                IDSelective = np.where(tmpBehData1["AttendedFirst"][Counter_Block, :] == IndexAttendedFirst)
+            elif (idx_rew != 1 and idx_rew != 3) and (idx_conf != 2 and idx_conf != 1) and (
+                    idx_att_first == 1 or idx_att_first == 0):
+                idx_selective = np.where(tmp_beh_data1["att_first"][block, :] == idx_att_first)
 
-            elif (IndexRew == 1 or IndexRew == 3) and (IndexConf == 2 or IndexConf == 1) and (
-                    IndexAttendedFirst != 1 and IndexAttendedFirst != 0):
-                # pdb.set_trace()
-                IDSelective = np.intersect1d(np.where(tmpBehData1["ConfidenceValue"][Counter_Block, :] == IndexConf),
-                                             np.where(tmpBehData1["RewardVecValue"][Counter_Block, :] == IndexRew))
+            elif (idx_rew == 1 or idx_rew == 3) and (idx_conf == 2 or idx_conf == 1) and (
+                    idx_att_first != 1 and idx_att_first != 0):
+                idx_selective = np.intersect1d(np.where(tmp_beh_data1["conf_val"][block, :] == idx_conf), 
+                                               np.where(tmp_beh_data1["rew_val"][block, :] == idx_rew))
 
-            elif (IndexRew == 1 or IndexRew == 3) and (IndexConf != 2 and IndexConf != 1) and (
-                    IndexAttendedFirst == 1 or IndexAttendedFirst == 0):
-                # pdb.set_trace()
-                IDSelective = np.intersect1d(np.where(tmpBehData1["RewardVecValue"][Counter_Block, :] == IndexRew),
-                                             np.where(
-                                                 tmpBehData1["AttendedFirst"][Counter_Block, :] == IndexAttendedFirst))
+            elif (idx_rew == 1 or idx_rew == 3) and (idx_conf != 2 and idx_conf != 1) and (
+                    idx_att_first == 1 or idx_att_first == 0):
+                idx_selective = np.intersect1d(np.where(tmp_beh_data1["rew_val"][block, :] == idx_rew), 
+                                               np.where(tmp_beh_data1["att_first"][block, :] == idx_att_first))
 
-            elif (IndexRew != 1 and IndexRew != 3) and (IndexConf == 2 or IndexConf == 1) and (
-                    IndexAttendedFirst == 1 or IndexAttendedFirst == 0):
-                # pdb.set_trace()
-                IDSelective = np.intersect1d(np.where(tmpBehData1["ConfidenceValue"][Counter_Block, :] == IndexConf),
-                                             np.where(
-                                                 tmpBehData1["AttendedFirst"][Counter_Block, :] == IndexAttendedFirst))
+            elif (idx_rew != 1 and idx_rew != 3) and (idx_conf == 2 or idx_conf == 1) and (
+                    idx_att_first == 1 or idx_att_first == 0):
+                idx_selective = np.intersect1d(np.where(tmp_beh_data1["conf_val"][block, :] == idx_conf), 
+                                               np.where(tmp_beh_data1["att_first"][block, :] == idx_att_first))
 
-            elif (IndexRew == 1 or IndexRew == 3) and (IndexConf == 2 or IndexConf == 1) and (
-                    IndexAttendedFirst == 1 or IndexAttendedFirst == 0):
-                # pdb.set_trace()
-                IDSelective = reduce(np.intersect1d, (
-                    np.where(tmpBehData1["ConfidenceValue"][Counter_Block, :] == IndexConf),
-                    np.where(tmpBehData1["RewardVecValue"][Counter_Block, :] == IndexRew),
-                    np.where(tmpBehData1["AttendedFirst"][Counter_Block, :] == IndexAttendedFirst)))
-
+            elif (idx_rew == 1 or idx_rew == 3) and (idx_conf == 2 or idx_conf == 1) and (
+                    idx_att_first == 1 or idx_att_first == 0):
+                idx_selective = reduce(np.intersect1d, (np.where(tmp_beh_data1["conf_val"][block, :] == idx_conf), 
+                                                        np.where(tmp_beh_data1["rew_val"][block, :] == idx_rew), 
+                                                        np.where(tmp_beh_data1["att_first"][block, :] == idx_att_first))
+                                       )
             else:
 
-                IDSelective = range(len(tmpBehData1["RewardVecValue"][Counter_Block, :]))
+                idx_selective = range(len(tmp_beh_data1["rew_val"][block, :]))
 
-            # pdb.set_trace()
-            CorrectVec = tmpBehData1["GetReward"][Counter_Block, IDSelective]
-            Performance[Counter_Subjects, Counter_Block] = Behavior.Performance(CorrectVec)
-            PStay[Counter_Subjects, Counter_Block] = Behavior.PStay(CorrectVec)
-            PWinStay[Counter_Subjects, Counter_Block] = Behavior.PWinStay(CorrectVec)
-            PLoseSwitch[Counter_Subjects, Counter_Block] = Behavior.PLoseSwitch(CorrectVec)
-            # pdb.set_trace()
-            tmpRT = tmpBehData1["SubjectRT"][Counter_Block, IDSelective][CorrectVec.astype(bool)]
-            tmpRT = tmpRT[tmpRT > 0]  # remove the ones which was no answer or negative
-            SubjectRT.append(tmpRT)
-            MeanSubjectRT[Counter_Subjects, Counter_Block] = np.mean(tmpRT)
+            cor_vec = tmp_beh_data1["get_rew"][block, idx_selective]
+            performance[subject, block] = Behavior.performance(cor_vec)
+            prob_stay[subject, block] = Behavior.prob_stay(cor_vec)
+            prob_winstay[subject, block] = Behavior.prob_winstay(cor_vec)
+            prob_loseswitch[subject, block] = Behavior.prob_loseswitch(cor_vec)
+            tmp_rt = tmp_beh_data1["sub_rt"][block, idx_selective][cor_vec.astype(bool)]
+            tmp_rt = tmp_rt[tmp_rt > 0]  # remove the ones which was no answer or negative
+            sub_rt.append(tmp_rt)
+            mean_sub_rt[subject, block] = np.mean(tmp_rt)
 
-            # if IndexRew == 1 or IndexRew == 3:
+        beh_result = {"performance": performance, "prob_stay": prob_stay, "prob_winstay": prob_winstay, 
+                      "prob_loseswitch": prob_loseswitch, "sub_rt": sub_rt, "mean_sub_rt": mean_sub_rt}
 
-        BehResult = {"Performance": Performance, "PStay": PStay, "PWinStay": PWinStay, "PLoseSwitch": PLoseSwitch,
-                     "SubjectRT": SubjectRT, "MeanSubjectRT": MeanSubjectRT}
-
-    return BehResult
+    return beh_result
 
 
-############################################################################### 
+# Extracting the behavioral variables #############################
+beh_vars = var_extractor(file_directory, subject_list)
 
-# %%
-###############################################################################
-############################# Main Script #####################################
-###############################################################################
+# Instruction ##############################
 
+# idx_side = 0 means all the trials
+# idx_side = 1 means the trials of side 1
+# idx_side = 2 means the trials of side 2
 
-# Extracting the behavioral variables
-BehVariables = VariableExtractor(FileDirectory, SubjectsList)
+# idx_rew = 0 means all the trials
+# idx_rew = 3 means the trials with reward 3
+# idx_rew = 1 means the trials with reward 1
 
-############################# Instruction #####################################
+# idx_conf = 0 means all the trials
+# idx_conf = 2 means the trials with confidence 2
+# idx_conf = 1 means the trials with confidence 1
 
-# IndexSide = 0 means all the trials
-# IndexSide = 1 means the trials of side 1
-# IndexSide = 2 means the trials of side 2
+# idx_att_first = 2
+# idx_att_first = 1
+# idx_att_first = 0
 
-# IndexRew = 0 means all the trials
-# IndexRew = 3 means the trials with reward 3
-# IndexRew = 1 means the trials with reward 1
+# Strategy over all trials #############################
+idx_rew = 0
+idx_conf = 0
+idx_side = 0
+idx_att_first = 2
 
-# IndexConf = 0 means all the trials
-# IndexConf = 2 means the trials with confidence 2
-# IndexConf = 1 means the trials with confidence 1
+beh0002 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
 
-# IndexAttendedFirst = 2
-# IndexAttendedFirst = 1
-# IndexAttendedFirst = 0
-# %%
-######################## Strategy over all trials #############################
-IndexRew = 0
-IndexConf = 0
-IndexSide = 0
-IndexAttendedFirst = 2;
+# Strategy over all trials #############################
+idx_rew = 0
+idx_conf = 0
+idx_side = 1
+idx_att_first = 2
 
-BehResultAllSideAllRewAllConfAllAttend = BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst)
-# %%
-# pdb.set_trace()
-
-######################## Strategy over all trials #############################
-IndexRew = 0
-IndexConf = 0
-IndexSide = 1
-IndexAttendedFirst = 2;
-
-BehResult1SideAllRewAllConfAllAttend = BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst)
+beh0012 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
 
 #
-IndexRew = 0
-IndexConf = 0
-IndexSide = 2
-IndexAttendedFirst = 2;
+idx_rew = 0
+idx_conf = 0
+idx_side = 2
+idx_att_first = 2
 
-BehResult2SideAllRewAllConfAllAttend = BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst)
+beh0022 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
 
-Perf1 = BehResult1SideAllRewAllConfAllAttend["Performance"]
-Perf2 = BehResult2SideAllRewAllConfAllAttend["Performance"]
+perf1 = beh0012["performance"]
+perf2 = beh0022["performance"]
 
-MeanPerf1 = np.mean(Perf1, 1)
-MeanPerf2 = np.mean(Perf2, 1)
-TtestSideMean12 = stats.ttest_rel(np.delete(MeanPerf1, 18), np.delete(MeanPerf2, 18))
+mean_perf1 = np.mean(perf1, 1)
+mean_perf2 = np.mean(perf2, 1)
+ttest_mean12 = stats.ttest_rel(np.delete(mean_perf1, 18), np.delete(mean_perf2, 18))
 
-from scipy import stats
-
-Perf1 = Perf1.reshape(Perf1.shape[0] * Perf1.shape[1], 1)
-Perf2 = Perf2.reshape(Perf2.shape[0] * Perf2.shape[1], 1)
-TtestSide12 = stats.ttest_rel(Perf1, Perf2)
-RanksumtestSide12 = stats.ranksums(Perf1, Perf2)
+perf1 = perf1.reshape(perf1.shape[0] * perf1.shape[1], 1)
+perf2 = perf2.reshape(perf2.shape[0] * perf2.shape[1], 1)
+ttest_12 = stats.ttest_rel(perf1, perf2)
+ranksum_12 = stats.ranksums(perf1, perf2)
 
 # %%
-############## Strategy over all trials attend first ##########################
-IndexRew = 0
-IndexConf = 0
-IndexSide = 0
-IndexAttendedFirst = 1;
+# Strategy over all trials attend first ##########################
+idx_rew = 0
+idx_conf = 0
+idx_side = 0
+idx_att_first = 1
 
-BehResultAllSideAllRewAllConfAttendFirst = BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst)
-
-# %%
-############## Strategy over all trials attend second #########################
-IndexRew = 0
-IndexConf = 0
-IndexSide = 0
-IndexAttendedFirst = 0;
-
-BehResultAllSideAllRewAllConfAttendSec = BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst)
+beh0001 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
 
 # %%
-############# Strategy over all trials highreward #############################
-IndexRew = 3
-IndexConf = 0
-IndexSide = 0
-IndexAttendedFirst = 2;
+# Strategy over all trials attend second #########################
+idx_rew = 0
+idx_conf = 0
+idx_side = 0
+idx_att_first = 0
 
-BehResultAllSideHighRewAllConfAllAttend = BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst)
+beh0000 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
+
 # %%
-############## Strategy over all trials lowreward #############################
-IndexRew = 1
-IndexConf = 0
-IndexSide = 0
-IndexAttendedFirst = 2;
+# Strategy over all trials highreward #############################
+idx_rew = 3
+idx_conf = 0
+idx_side = 0
+idx_att_first = 2
 
-BehResultAllSideLowRewAllConfAllAttend = BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst)
+beh3002 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
 # %%
-############### Strategy over all trials highconfidence #######################
-IndexRew = 0
-IndexConf = 2
-IndexSide = 0
-IndexAttendedFirst = 2;
+# Strategy over all trials lowreward #############################
+idx_rew = 1
+idx_conf = 0
+idx_side = 0
+idx_att_first = 2
 
-BehResultAllSideAllRewHighConfAllAttend = BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst)
+beh1002 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
 # %%
-############## Strategy over all trials lowconfidence #########################
-IndexRew = 0
-IndexConf = 1
-IndexSide = 0
-IndexAttendedFirst = 2;
+# Strategy over all trials highconfidence #######################
+idx_rew = 0
+idx_conf = 2
+idx_side = 0
+idx_att_first = 2
 
-BehResultAllSideAllRewLowConfAllAttend = BehAnalysis(BehVariables, IndexRew, IndexConf, IndexSide, IndexAttendedFirst)
+beh0202 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
+# %%
+# Strategy over all trials lowconfidence #########################
+idx_rew = 0
+idx_conf = 1
+idx_side = 0
+idx_att_first = 2
 
-################################# Saving the variables ########################
+beh0102 = beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first)
+
+#  Saving the variables ########################
 # %%
 # pip install dill --user
 filename = 'Behavior20181220.pkl'
 
 dill.dump_session(filename)
 
-## and to load the session again:
+# and to load the session again:
 # import dill
 # filename = 'Behavior.pkl'
 # dill.load_session(filename)
