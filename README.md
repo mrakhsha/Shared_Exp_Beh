@@ -8,5 +8,5 @@ This is the rep for the project of the PSYC 161 course
   - [X] Revise the code to make it with PEP8 compliance
   - [X] Fix the bug for the WinStay, LoseSwitch
   - [ ] Use Argparse
-  - [ ] Add tests
-  - [ ] Use Shablona template
+  - [X] Add tests
+
