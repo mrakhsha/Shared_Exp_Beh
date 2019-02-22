@@ -8,9 +8,7 @@ install:
 
 
 script:
-- mkdir for_test
-- cd for_test
-- pytest --pyargs Shared_Exp_Beh --cov-report term-missing --cov=Shared_Exp_Beh
+- pytest
 
 
 after_success:
