@@ -2,13 +2,10 @@
 This code is written for behavioral analysis of the EEG shared experiment
 Written by Mohsen Rakhshan 
 
-To do list: I should calculate WinStay LoseSwitch and the others on the real indices and not in the idx_selective
 """
 # import necessary libraries and packages
 import scipy.io
 import numpy as np
-# import pdb
-# import dill
 
 
 # define a class of functions for behavior analysis
@@ -228,7 +225,7 @@ def beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first):
                 raise ValueError('RT could not be higher than 1sec')
             sub_rt.append(tmp_rt)
             mean_sub_rt[cnt_sub, block] = np.mean(tmp_rt)
-            # add one to the counter of subjects
+        # add one to the counter of subjects
         cnt_sub += 1
     beh_result = {"performance": performance, "prob_stay": prob_stay, "prob_winstay": prob_winstay,
                   "prob_loseswitch": prob_loseswitch, "sub_rt": sub_rt, "mean_sub_rt": mean_sub_rt}
@@ -240,21 +237,20 @@ def main():
     # Directory of the behavioral data (To do: Change this to argument)
     file_directory = '/Users/mohsen/Dropbox (CCNL-Dartmouth)/Shared Experiments REWARD/BehData/'
     # list of subjects (To do: Change this to argument)
-    subject_list = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Shared_HASubNum20',
-                    'behav_Shared_JHSubNum29',
-                    'behav_Shared_JSSubNum25', 'behav_Shared_PDSubNum28', 'behav_Shared_SPSubNum27',
-                    'behav_Shared_STSubNum26',
-                    'behav_Shared_TLSubNum22', 'behav_Shared_TWSubNum30', 'behav_Shared_TZSubNum23',
-                    'behav_Shared_AHSubNum12',
-                    'behav_Shared_AMSubNum16', 'behav_Shared_ASSubNum18', 'behav_Shared_BJSSubNum14',
-                    'behav_Shared_BSSubNum15',
-                    'behav_Shared_JEVSubNum11', 'behav_Shared_JGSubNum19', 'behav_Shared_JSSubNum16',
-                    'behav_Shared_MHSubNum17',
-                    'behav_Shared_OKSubNum13', 'behav_Shared_GFSubNum15', 'behav_Shared_KKSubNum14',
-                    'behav_Shared_NH2SubNum13']
+    # subject_list = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Shared_HASubNum20',
+    #                 'behav_Shared_JHSubNum29',
+    #                 'behav_Shared_JSSubNum25', 'behav_Shared_PDSubNum28', 'behav_Shared_SPSubNum27',
+    #                 'behav_Shared_STSubNum26',
+    #                 'behav_Shared_TLSubNum22', 'behav_Shared_TWSubNum30', 'behav_Shared_TZSubNum23',
+    #                 'behav_Shared_AHSubNum12',
+    #                 'behav_Shared_AMSubNum16', 'behav_Shared_ASSubNum18', 'behav_Shared_BJSSubNum14',
+    #                 'behav_Shared_BSSubNum15',
+    #                 'behav_Shared_JEVSubNum11', 'behav_Shared_JGSubNum19', 'behav_Shared_JSSubNum16',
+    #                 'behav_Shared_MHSubNum17',
+    #                 'behav_Shared_OKSubNum13', 'behav_Shared_GFSubNum15', 'behav_Shared_KKSubNum14',
+    #                 'behav_Shared_NH2SubNum13']
 
-    # subject_list = ['behav_Shared_ARSubNum21']
-    # subject_list  = ['Shared_GFSubNum15','Shared_KKSubNum14','Shared_NH2SubNum13']
+    subject_list = ['behav_Shared_ARSubNum21']
 
     # Extracting the behavioral variables #############################
     beh_vars = var_extractor(file_directory, subject_list)
@@ -290,6 +286,93 @@ def main():
     beh_all = (beh0002, beh0012, beh0022, beh0001, beh0000, beh3002, beh1002, beh0202, beh0102)
 
     return beh_all
+
+
+def test_beh_analysis():
+    """
+
+    :return: Test results raise error
+    """
+
+    # Test if the size of all variables of the experiment is same
+    file_directory = '/Users/mohsen/Dropbox (CCNL-Dartmouth)/Shared Experiments REWARD/BehData/'
+    subject_list = ['behav_Shared_ARSubNum21']
+    beh_vars = var_extractor(file_directory, subject_list)
+    assert beh_vars[0]["conf_val"].shape == beh_vars[0]["conf_val"].shape == beh_vars[0]["get_rew"].shape == \
+           beh_vars[0]["rew_val"].shape == beh_vars[0]["sub_rt"].shape == beh_vars[0]["att_first"].shape == \
+           beh_vars[0]["num_tar_att"].shape
+
+    # Tests of stay, winstay, and loseswitch
+    cor_vec = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert Behavior.performance(cor_vec) == float(0)
+
+    cor_vec = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    assert Behavior.performance(cor_vec) == float(100)
+
+    cor_vec = np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0])
+    assert Behavior.performance(cor_vec) == float(50)
+
+    pre_cor_vec = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    cor_vec = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert Behavior.prob_stay(cor_vec, pre_cor_vec) == float(1)
+
+    pre_cor_vec = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    cor_vec = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    assert Behavior.prob_stay(cor_vec, pre_cor_vec) == float(1)
+
+    pre_cor_vec = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    cor_vec = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert Behavior.prob_stay(cor_vec, pre_cor_vec) == float(0)
+
+    pre_cor_vec = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    cor_vec = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert Behavior.prob_winstay(cor_vec, pre_cor_vec) == float(0)
+    assert np.isnan(Behavior.prob_loseswitch(cor_vec, pre_cor_vec))
+
+    pre_cor_vec = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    cor_vec = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    assert Behavior.prob_winstay(cor_vec, pre_cor_vec) == float(1)
+    assert np.isnan(Behavior.prob_loseswitch(cor_vec, pre_cor_vec))
+
+    pre_cor_vec = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    cor_vec = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert np.isnan(Behavior.prob_winstay(cor_vec, pre_cor_vec))
+    assert Behavior.prob_loseswitch(cor_vec, pre_cor_vec) == float(0)
+
+    pre_cor_vec = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    cor_vec = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    assert np.isnan(Behavior.prob_winstay(cor_vec, pre_cor_vec))
+    assert Behavior.prob_loseswitch(cor_vec, pre_cor_vec) == float(1)
+
+    # smoke tests for beh_analysis
+    beh0002 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=0, idx_att_first=2)
+    beh0012 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=1, idx_att_first=2)
+    beh0022 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=2, idx_att_first=2)
+    beh0001 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=0, idx_att_first=1)
+    beh0000 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=0, idx_att_first=0)
+    beh3002 = beh_analysis(beh_vars, idx_rew=3, idx_conf=0, idx_side=0, idx_att_first=2)
+    beh1002 = beh_analysis(beh_vars, idx_rew=1, idx_conf=0, idx_side=0, idx_att_first=2)
+    beh0202 = beh_analysis(beh_vars, idx_rew=0, idx_conf=2, idx_side=0, idx_att_first=2)
+    beh0102 = beh_analysis(beh_vars, idx_rew=0, idx_conf=1, idx_side=0, idx_att_first=2)
+
+    assert beh0002["performance"].shape == beh0002["prob_stay"].shape == beh0002["prob_winstay"].shape == \
+           beh0002["prob_loseswitch"].shape == beh0002["mean_sub_rt"].shape
+    assert beh0012["performance"].shape == beh0012["prob_stay"].shape == beh0012["prob_winstay"].shape == \
+           beh0012["prob_loseswitch"].shape == beh0012["mean_sub_rt"].shape
+    assert beh0022["performance"].shape == beh0022["prob_stay"].shape == beh0022["prob_winstay"].shape == \
+           beh0022["prob_loseswitch"].shape == beh0022["mean_sub_rt"].shape
+    assert beh0001["performance"].shape == beh0001["prob_stay"].shape == beh0001["prob_winstay"].shape == \
+           beh0001["prob_loseswitch"].shape == beh0001["mean_sub_rt"].shape
+    assert beh0000["performance"].shape == beh0000["prob_stay"].shape == beh0000["prob_winstay"].shape == \
+           beh0000["prob_loseswitch"].shape == beh0000["mean_sub_rt"].shape
+    assert beh3002["performance"].shape == beh3002["prob_stay"].shape == beh3002["prob_winstay"].shape == \
+           beh3002["prob_loseswitch"].shape == beh3002["mean_sub_rt"].shape
+    assert beh1002["performance"].shape == beh1002["prob_stay"].shape == beh1002["prob_winstay"].shape == \
+           beh1002["prob_loseswitch"].shape == beh1002["mean_sub_rt"].shape
+    assert beh0202["performance"].shape == beh0202["prob_stay"].shape == beh0202["prob_winstay"].shape == \
+           beh0202["prob_loseswitch"].shape == beh0202["mean_sub_rt"].shape
+    assert beh0102["performance"].shape == beh0102["prob_stay"].shape == beh0102["prob_winstay"].shape == \
+           beh0102["prob_loseswitch"].shape == beh0102["mean_sub_rt"].shape
 
 
 if __name__ == '__main__':
