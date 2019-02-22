@@ -235,7 +235,7 @@ def beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first):
 
 def main():
     # Directory of the behavioral data (To do: Change this to argument)
-    file_directory = '../data/'
+    file_directory = './data/'
     # list of subjects (To do: Change this to argument)
     # subject_list = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Shared_HASubNum20',
     #                 'behav_Shared_JHSubNum29',
