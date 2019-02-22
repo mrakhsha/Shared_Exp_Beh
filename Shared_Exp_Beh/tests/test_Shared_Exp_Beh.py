@@ -1,6 +1,9 @@
 import numpy as np
 import scipy.io
 import Shared_Exp_Beh as seb
+import os.path as op
+
+data_path = op.join(seb.__path__[0], 'data/')
 
 
 def test_beh_analysis():
@@ -10,7 +13,7 @@ def test_beh_analysis():
     """
 
     # Test if the size of all variables of the experiment is same
-    file_directory = '../data/'
+    file_directory = data_path
     subject_list = ['behav_Shared_ARSubNum21']
     beh_vars = seb.var_extractor(file_directory, subject_list)
     assert beh_vars[0]["conf_val"].shape == beh_vars[0]["conf_val"].shape == beh_vars[0]["get_rew"].shape == \
