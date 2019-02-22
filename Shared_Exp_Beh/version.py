@@ -60,4 +60,4 @@ MINOR = _version_minor
 MICRO = _version_micro
 VERSION = __version__
 PACKAGE_DATA = {'Shared_Exp_Beh': [pjoin('data', '*')]}
-REQUIRES = ["numpy", "scipy.io"]
+REQUIRES = ["numpy", "scipy"]

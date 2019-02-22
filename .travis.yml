@@ -15,7 +15,7 @@ script:
 - flake8
 - mkdir for_test
 - cd for_test
-- py.test --pyargs Shared_Exp_Beh --cov-report term-missing --cov=Shared_Exp_Beh
+- pytest --pyargs Shared_Exp_Beh --cov-report term-missing --cov=Shared_Exp_Beh
 
 
 after_success:
