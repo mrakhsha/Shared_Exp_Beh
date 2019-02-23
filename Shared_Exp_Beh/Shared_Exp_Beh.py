@@ -175,26 +175,26 @@ def beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first):
             elif (idx_rew == 1 or idx_rew == 3) and (idx_conf == 2 or idx_conf == 1) and (
                     idx_att_first != 1 and idx_att_first != 0):
 
-                idx_sel_bool = (tmp_beh_data1["conf_val"][block, :] == idx_conf) and \
+                idx_sel_bool = (tmp_beh_data1["conf_val"][block, :] == idx_conf) & \
                                (tmp_beh_data1["rew_val"][block, :] == idx_rew)
 
             elif (idx_rew == 1 or idx_rew == 3) and (idx_conf != 2 and idx_conf != 1) and (
                     idx_att_first == 1 or idx_att_first == 0):
 
-                idx_sel_bool = (tmp_beh_data1["rew_val"][block, :] == idx_rew) and \
+                idx_sel_bool = (tmp_beh_data1["rew_val"][block, :] == idx_rew) & \
                                (tmp_beh_data1["att_first"][block, :] == idx_att_first)
 
             elif (idx_rew != 1 and idx_rew != 3) and (idx_conf == 2 or idx_conf == 1) and (
                     idx_att_first == 1 or idx_att_first == 0):
 
-                idx_sel_bool = (tmp_beh_data1["conf_val"][block, :] == idx_conf) and \
+                idx_sel_bool = (tmp_beh_data1["conf_val"][block, :] == idx_conf) & \
                                (tmp_beh_data1["att_first"][block, :] == idx_att_first)
 
             elif (idx_rew == 1 or idx_rew == 3) and (idx_conf == 2 or idx_conf == 1) and (
                     idx_att_first == 1 or idx_att_first == 0):
 
-                idx_sel_bool = (tmp_beh_data1["conf_val"][block, :] == idx_conf) and \
-                               (tmp_beh_data1["rew_val"][block, :] == idx_rew) and \
+                idx_sel_bool = (tmp_beh_data1["conf_val"][block, :] == idx_conf) & \
+                               (tmp_beh_data1["rew_val"][block, :] == idx_rew) & \
                                (tmp_beh_data1["att_first"][block, :] == idx_att_first)
             else:
 
