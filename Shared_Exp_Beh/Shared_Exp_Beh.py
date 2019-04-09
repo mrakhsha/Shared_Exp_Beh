@@ -89,6 +89,37 @@ def var_extractor(file_directory, subject_list):
     return beh_vars
 
 
+# define the function which makes the data table of subjects
+def table_maker(beh_vars):
+    """
+
+    :param beh_vars: list of the data of the subjects
+    :return: a dictionary of the data
+    """
+    import pandas as pd
+    from scipy import stats
+    table_data = pd.DataFrame()
+    for subject in range(len(beh_vars)):
+
+        tmp_sub = beh_vars[subject]
+        num_trial = tmp_sub["att_first"].size
+        num_block = tmp_sub["att_side"].size
+        att_side = tmp_sub["att_side"]
+        att_side = np.repeat(att_side, num_trial/num_block)
+        sub_num = np.repeat(subject, num_trial)
+
+        # make a dictionary for necessary variables
+        tmp_data = {"sub_num": sub_num, "att_side": att_side, "conf_val": tmp_sub["conf_val"].flatten(),
+                    "get_rew": tmp_sub["get_rew"].flatten(), "rew_val": tmp_sub["rew_val"].flatten(),
+                    "sub_rt": tmp_sub["sub_rt"].flatten(), "att_first": tmp_sub["att_first"].flatten(),
+                    "num_tar_att": tmp_sub["num_tar_att"].flatten(), "z_rt": stats.zscore(tmp_sub["sub_rt"].flatten())}
+
+        tmp_table_data = pd.DataFrame(data=tmp_data)
+        table_data = table_data.append(tmp_table_data, ignore_index=True)
+
+    return table_data
+
+
 def beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first):
     """
 
@@ -233,60 +264,3 @@ def beh_analysis(beh_vars, idx_rew, idx_conf, idx_side, idx_att_first):
     return beh_result
 
 
-def main():
-    # Directory of the behavioral data (To do: Change this to argument)
-    file_directory = './data/'
-    # list of subjects (To do: Change this to argument)
-    # subject_list = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Shared_HASubNum20',
-    #                 'behav_Shared_JHSubNum29',
-    #                 'behav_Shared_JSSubNum25', 'behav_Shared_PDSubNum28', 'behav_Shared_SPSubNum27',
-    #                 'behav_Shared_STSubNum26',
-    #                 'behav_Shared_TLSubNum22', 'behav_Shared_TWSubNum30', 'behav_Shared_TZSubNum23',
-    #                 'behav_Shared_AHSubNum12',
-    #                 'behav_Shared_AMSubNum16', 'behav_Shared_ASSubNum18', 'behav_Shared_BJSSubNum14',
-    #                 'behav_Shared_BSSubNum15',
-    #                 'behav_Shared_JEVSubNum11', 'behav_Shared_JGSubNum19', 'behav_Shared_JSSubNum16',
-    #                 'behav_Shared_MHSubNum17',
-    #                 'behav_Shared_OKSubNum13', 'behav_Shared_GFSubNum15', 'behav_Shared_KKSubNum14',
-    #                 'behav_Shared_NH2SubNum13']
-
-    subject_list = ['behav_Shared_ARSubNum21']
-
-    # Extracting the behavioral variables #############################
-    beh_vars = var_extractor(file_directory, subject_list)
-
-    # Instruction ##############################
-
-    # idx_side = 0 means all the trials
-    # idx_side = 1 means the trials of side 1
-    # idx_side = 2 means the trials of side 2
-
-    # idx_rew = 0 means all the trials
-    # idx_rew = 3 means the trials with reward 3
-    # idx_rew = 1 means the trials with reward 1
-
-    # idx_conf = 0 means all the trials
-    # idx_conf = 2 means the trials with confidence 2
-    # idx_conf = 1 means the trials with confidence 1
-
-    # idx_att_first = 2
-    # idx_att_first = 1
-    # idx_att_first = 0
-
-    beh0002 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=0, idx_att_first=2)
-    beh0012 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=1, idx_att_first=2)
-    beh0022 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=2, idx_att_first=2)
-    beh0001 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=0, idx_att_first=1)
-    beh0000 = beh_analysis(beh_vars, idx_rew=0, idx_conf=0, idx_side=0, idx_att_first=0)
-    beh3002 = beh_analysis(beh_vars, idx_rew=3, idx_conf=0, idx_side=0, idx_att_first=2)
-    beh1002 = beh_analysis(beh_vars, idx_rew=1, idx_conf=0, idx_side=0, idx_att_first=2)
-    beh0202 = beh_analysis(beh_vars, idx_rew=0, idx_conf=2, idx_side=0, idx_att_first=2)
-    beh0102 = beh_analysis(beh_vars, idx_rew=0, idx_conf=1, idx_side=0, idx_att_first=2)
-
-    beh_all = (beh0002, beh0012, beh0022, beh0001, beh0000, beh3002, beh1002, beh0202, beh0102)
-
-    return beh_all
-
-
-if __name__ == '__main__':
-    main()
