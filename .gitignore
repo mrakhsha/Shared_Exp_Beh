@@ -1,3 +1,4 @@
 .idea
 .pytest_cache
 .gitignore.swp
+Shared_Exp_Beh/data/
