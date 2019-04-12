@@ -12,12 +12,11 @@ subject_list = ['behav_Shared_ARSubNum21', 'behav_Shared_ESSubNum24', 'behav_Sha
                 'behav_Shared_STSubNum26',
                 'behav_Shared_TLSubNum22', 'behav_Shared_TWSubNum30', 'behav_Shared_TZSubNum23',
                 'behav_Shared_AHSubNum12',
-                'behav_Shared_AMSubNum16', 'behav_Shared_ASSubNum18', 'behav_Shared_BJSSubNum14',
+                'behav_Shared_ASSubNum18', 'behav_Shared_BJSSubNum14',
                 'behav_Shared_BSSubNum15',
                 'behav_Shared_JEVSubNum11', 'behav_Shared_JGSubNum19', 'behav_Shared_JSSubNum16',
                 'behav_Shared_MHSubNum17',
-                'behav_Shared_OKSubNum13', 'behav_Shared_GFSubNum15', 'behav_Shared_KKSubNum14',
-                'behav_Shared_NH2SubNum13']
+                'behav_Shared_OKSubNum13']
 
 beh_vars = seb.var_extractor(file_directory, subject_list)
 # making a table from all the trials of all subjects
