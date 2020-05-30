@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/mrakhsha/Shared_Exp_Beh.svg?token=pMn8BuzxCxNNp7GkKV5p&branch=master)](https://travis-ci.com/mrakhsha/Shared_Exp_Beh)
+
 
 # Shared_Exp_Beh
 This is the behavior analyses of EPSCoR NSF project on the interaction of reward and attention.
